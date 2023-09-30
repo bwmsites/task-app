@@ -10,5 +10,6 @@ async function bootstrap() {
   // Get app configs
   const appConfig: AppConfigService = app.get(AppConfigService);
   await app.listen(appConfig.port);
+  console.log(`Server listening on ${await app.getUrl()}`);
 }
 bootstrap();
