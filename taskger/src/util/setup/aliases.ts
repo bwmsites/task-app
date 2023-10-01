@@ -8,4 +8,5 @@ moduleAlias.addAliases({
   '@config': join(path, 'config'),
   '@common': join(path, 'common'),
   '@domain': join(path, 'domain'),
+  '@database': join(path, 'database'),
 });

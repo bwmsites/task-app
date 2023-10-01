@@ -21,7 +21,8 @@
       "@src/*": ["./src/*"],
       "@config/*": ["./src/config/*"],
       "@common/*": ["./src/common/*"],
-      "@domain/*": ["./src/domain/*"]
+      "@domain/*": ["./src/domain/*"],
+      "@database/*": ["./src/database/*"]
     }
   }
 }
