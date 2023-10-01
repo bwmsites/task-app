@@ -1,68 +1,120 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
+import { TaskStatusType, Task as DB_TASK } from '@prisma/client';
 import { TaskStatusEnum } from '@common/enums/TaskStatus.enum';
 import { CreateTaskInput } from '@domain/task/dto/create-task.dto';
 import { Task } from '@domain/task/model/task.model';
 import { UpdateTaskInput } from '@domain/task/dto/update-task.dto';
 import { SetTaskStatusInput } from '@domain/task/dto/set-task-status.dto';
-
-export interface ITask {
-  id?: string;
-  title: string;
-  description: string;
-  status: TaskStatusEnum;
-}
+import { DatabaseService } from '@database/database.service';
 
 @Injectable()
 export class TaskService {
-  private readonly tasks: Task[] = [];
+  private readonly logger = new Logger(TaskService.name);
 
-  async createTask(task: CreateTaskInput): Promise<Task> {
-    const newTask: Task = {
-      id: `tsk${this.tasks.length + 1}`,
-      createdAt: new Date(),
+  private readonly taskStatusMap = {
+    [TaskStatusType.TO_DO]: 0,
+    [TaskStatusType.IN_PROGRESS]: 1,
+    [TaskStatusType.DONE]: 2,
+    [TaskStatusType.ARCHIVED]: 3,
+  };
+
+  constructor(private readonly db: DatabaseService) {}
+
+  private transformTaskResponse(task: DB_TASK): Task {
+    return {
+      id: task.id,
       title: task.title,
       description: task.description,
-      status: task.status,
+      status: this.taskStatusMap[task.status],
+      createdAt: task.createdAt,
+      updatedAt: task.updatedAt,
     };
+  }
 
-    this.tasks.push(newTask);
-    return newTask;
+  async createTask(data: CreateTaskInput): Promise<Task> {
+    try {
+      const newTask = await this.db.task.create({
+        data: {
+          title: data.title,
+          description: data.description,
+          status: TaskStatusEnum[data.status] as TaskStatusType,
+        },
+      });
+
+      return this.transformTaskResponse(newTask);
+    } catch (error) {
+      this.logger.error(
+        `Could not create new task due to ERROR: ${
+          error.message || error.stack
+        }`,
+      );
+
+      throw new InternalServerErrorException(error);
+    }
   }
 
   async getTasks(): Promise<Task[]> {
-    return await new Promise((resolve) =>
-      setTimeout(() => resolve(this.tasks as Task[]), 10),
-    );
+    const tasks = await this.db.task.findMany();
+
+    return tasks.map((task) => this.transformTaskResponse(task));
   }
 
   async getTaskById(id: string): Promise<Task> {
-    const task = this.tasks.find((task) => task.id === id);
-    return await new Promise((resolve) => setTimeout(() => resolve(task), 10));
+    const task = await this.db.task.findUnique({
+      where: {
+        id,
+      },
+    });
+
+    return this.transformTaskResponse(task);
   }
 
-  async deleteTask(id: string): Promise<boolean> {
-    const task = this.tasks.find((task) => task.id === id);
-    if (!task) return false;
+  async deleteTask(id: string): Promise<string> {
+    try {
+      const deleted = await this.db.task.delete({
+        where: { id },
+      });
 
-    this.tasks.splice(this.tasks.indexOf(task), 1);
-    return true;
+      return deleted.id;
+    } catch (error) {
+      this.logger.error(
+        `Could not delete task due to ERROR: ${error.message || error.stack}`,
+      );
+
+      throw new InternalServerErrorException(error);
+    }
   }
 
-  async updateTask(
-    updateData: UpdateTaskInput | SetTaskStatusInput,
+  async updateTask<T extends UpdateTaskInput | SetTaskStatusInput>(
+    updateData: T,
   ): Promise<Task> {
-    const task = this.tasks.find((task) => task.id === updateData.id);
-    const index = this.tasks.indexOf(task);
+    try {
+      const taskData = {
+        ...(updateData as UpdateTaskInput),
+        ...(updateData as SetTaskStatusInput),
+      };
 
-    const updatedTask: Task = {
-      ...(updateData as Task),
-      createdAt: task.createdAt,
-      updatedAt: new Date(),
-    };
+      const task = await this.db.task.update({
+        where: { id: updateData.id },
+        data: {
+          title: taskData.title,
+          description: taskData.description,
+          status: TaskStatusEnum[taskData.status] as TaskStatusType,
+          updatedAt: new Date(),
+        },
+      });
 
-    this.tasks.splice(index, 1);
-    this.tasks.push(updatedTask);
+      return this.transformTaskResponse(task);
+    } catch (error) {
+      this.logger.error(
+        `Could not update task due to ERROR: ${error.message || error.stack}`,
+      );
 
-    return updatedTask;
+      throw new InternalServerErrorException(error);
+    }
   }
 }

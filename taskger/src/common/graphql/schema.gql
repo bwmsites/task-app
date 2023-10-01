@@ -16,7 +16,7 @@ scalar DateTime
 type Mutation {
   archiveTask(id: String!): Task!
   createTask(newTaskData: CreateTaskInput!): Task!
-  deleteTask(id: String!): Boolean!
+  deleteTask(id: String!): String!
   setTaskStatus(setTaskStatusData: SetTaskStatusInput!): Task!
   updateTask(updateTaskData: UpdateTaskInput!): Task!
 }
