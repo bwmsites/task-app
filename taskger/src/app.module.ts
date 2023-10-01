@@ -5,6 +5,7 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
 import { TaskModule } from './domain/task/task.module';
+import { UserModule } from './domain/user/user.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { TaskModule } from './domain/task/task.module';
       sortSchema: true,
     }),
     TaskModule,
+    UserModule,
   ],
   controllers: [],
   providers: [],

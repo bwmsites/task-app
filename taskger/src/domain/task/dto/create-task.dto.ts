@@ -17,4 +17,8 @@ export class CreateTaskInput {
   @Field(() => TaskStatusEnum)
   @IsEnum(TaskStatusEnum)
   status: TaskStatusEnum;
+
+  @Field()
+  @IsString()
+  userId: string;
 }

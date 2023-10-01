@@ -5,5 +5,6 @@ import { DatabaseService } from '@database/database.service';
 
 @Module({
   providers: [TaskResolver, TaskService, DatabaseService],
+  exports: [TaskService],
 })
 export class TaskModule {}

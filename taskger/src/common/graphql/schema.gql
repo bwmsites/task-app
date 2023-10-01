@@ -6,6 +6,13 @@ input CreateTaskInput {
   description: String!
   status: TaskStatusEnum!
   title: String!
+  userId: String!
+}
+
+input CreateUserInput {
+  email: String!
+  name: String!
+  password: String!
 }
 
 """
@@ -16,6 +23,7 @@ scalar DateTime
 type Mutation {
   archiveTask(id: String!): Task!
   createTask(newTaskData: CreateTaskInput!): Task!
+  createUser(newUserData: CreateUserInput!): User!
   deleteTask(id: String!): String!
   setTaskStatus(setTaskStatusData: SetTaskStatusInput!): Task!
   updateTask(updateTaskData: UpdateTaskInput!): Task!
@@ -52,4 +60,12 @@ input UpdateTaskInput {
   description: String
   id: ID!
   title: String
+}
+
+"""user"""
+type User {
+  email: String!
+  id: ID!
+  name: String!
+  password: String!
 }

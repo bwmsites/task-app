@@ -42,6 +42,11 @@ export class TaskService {
           title: data.title,
           description: data.description,
           status: TaskStatusEnum[data.status] as TaskStatusType,
+          User: {
+            connect: {
+              id: data.userId,
+            },
+          },
         },
       });
 
