@@ -31,7 +31,7 @@ export class TaskService {
       description: task.description,
       status: this.taskStatusMap[task.status],
       createdAt: task.createdAt,
-      updatedAt: task.updatedAt,
+      updatedAt: task.updatedAt || null,
       userId: task.userId,
     };
   }
