@@ -32,6 +32,7 @@ export class TaskService {
       status: this.taskStatusMap[task.status],
       createdAt: task.createdAt,
       updatedAt: task.updatedAt,
+      userId: task.userId,
     };
   }
 
@@ -54,7 +55,7 @@ export class TaskService {
     } catch (error) {
       this.logger.error(
         `Could not create new task due to ERROR: ${
-          error.message || error.stack
+          error.message || error.stack || error
         }`,
       );
 
@@ -62,24 +63,54 @@ export class TaskService {
     }
   }
 
-  async getTasks(): Promise<Task[]> {
-    const tasks = await this.db.task.findMany();
+  async getTasksByUser(userId: string): Promise<Task[]> {
+    this.logger.log(`Searching tasks for user ${userId}`);
+
+    const tasks = await this.db.task.findMany({
+      where: {
+        User: {
+          id: userId,
+        },
+      },
+    });
 
     return tasks.map((task) => this.transformTaskResponse(task));
   }
 
-  async getTaskById(id: string): Promise<Task> {
-    const task = await this.db.task.findUnique({
+  async getTaskById(id: string, userId: string): Promise<Task> {
+    this.logger.log(`Searching for task with ID ${id}`);
+
+    const task = await this.db.task.findFirst({
       where: {
-        id,
+        AND: {
+          id,
+          User: {
+            id: userId,
+          },
+        },
       },
     });
 
     return this.transformTaskResponse(task);
   }
 
-  async deleteTask(id: string): Promise<string> {
+  async deleteTask(id: string, userId: string): Promise<string> {
     try {
+      const task = await this.db.task.findFirst({
+        where: {
+          AND: {
+            id,
+            User: {
+              id: userId,
+            },
+          },
+        },
+      });
+
+      if (!task) {
+        throw new Error(`Task is not owned by current logged user`);
+      }
+
       const deleted = await this.db.task.delete({
         where: { id },
       });
@@ -96,8 +127,22 @@ export class TaskService {
 
   async updateTask<T extends UpdateTaskInput | SetTaskStatusInput>(
     updateData: T,
+    userId: string,
   ): Promise<Task> {
     try {
+      const found = await this.db.task.findFirst({
+        where: {
+          AND: {
+            id: updateData.id,
+            User: {
+              id: userId,
+            },
+          },
+        },
+      });
+
+      if (!found) throw new Error(`Task is not owned by current logged user`);
+
       const taskData = {
         ...(updateData as UpdateTaskInput),
         ...(updateData as SetTaskStatusInput),
@@ -116,7 +161,9 @@ export class TaskService {
       return this.transformTaskResponse(task);
     } catch (error) {
       this.logger.error(
-        `Could not update task due to ERROR: ${error.message || error.stack}`,
+        `Could not update task due to ERROR: ${
+          error.message || error.stack || error
+        }`,
       );
 
       throw new InternalServerErrorException(error);
