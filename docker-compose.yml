@@ -1,6 +1,19 @@
 version: '3.8'
 
 services:
+  taskger:
+    container_name: taskger-server
+    build: ./taskger
+    volumes:
+      - /app/node_modules
+    env_file:
+      - taskger/.env
+    depends_on:
+      - postgres
+    ports:
+      - "3002:3001"
+    networks:
+      - taskger-network
   postgres:
     container_name: taskger-db
     image: postgres:12.5-alpine
