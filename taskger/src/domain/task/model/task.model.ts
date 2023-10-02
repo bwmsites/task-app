@@ -24,4 +24,7 @@ export class Task {
 
   @Field(() => TaskStatusEnum)
   status: TaskStatusEnum;
+
+  @Field()
+  userId: string;
 }
