@@ -4,6 +4,7 @@ import { UserService } from '@domain/user/user.service';
 import { Task } from '@domain/task/model/task.model';
 import { TaskService } from '@domain/task/task.service';
 import { CreateUserInput } from './dto/create-user.dto';
+import { LoginInput } from './dto/login-user.dto';
 
 @Resolver(() => User)
 export class UserResolver {
@@ -27,5 +28,12 @@ export class UserResolver {
     @Args('newUserData') newUserData: CreateUserInput,
   ): Promise<User> {
     return await this.userService.createUser(newUserData);
+  }
+
+  @Mutation(() => String)
+  async login(@Args('loginData') loginData: LoginInput): Promise<string> {
+    const user = await this.userService.findUserByEmailAndPassword(loginData);
+
+    return this.userService.generateToken(user);
   }
 }

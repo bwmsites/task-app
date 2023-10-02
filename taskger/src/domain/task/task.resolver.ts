@@ -1,11 +1,13 @@
-import { NotFoundException } from '@nestjs/common';
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { NotFoundException, UseGuards } from '@nestjs/common';
+import { Args, Context, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { CreateTaskInput } from '@domain/task/dto/create-task.dto';
 import { Task } from '@domain/task/model/task.model';
 import { TaskService } from '@domain/task/task.service';
 import { UpdateTaskInput } from '@domain/task/dto/update-task.dto';
 import { TaskStatusEnum } from '@common/enums/TaskStatus.enum';
 import { SetTaskStatusInput } from '@domain/task/dto/set-task-status.dto';
+import { User } from '@domain/user/model/user.model';
+import { AuthGuard } from '@common/auth/auth.guard';
 
 @Resolver(() => Task)
 export class TaskResolver {
@@ -28,10 +30,12 @@ export class TaskResolver {
   }
 
   @Mutation(() => Task)
+  @UseGuards(new AuthGuard())
   async createTask(
+    @Context('user') { id: userId }: User,
     @Args('newTaskData') newTaskData: CreateTaskInput,
   ): Promise<Task> {
-    const task = await this.taskService.createTask(newTaskData);
+    const task = await this.taskService.createTask({ userId, ...newTaskData });
     return task;
   }
 
