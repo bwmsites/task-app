@@ -33,6 +33,12 @@ $ npm install
 ```
 
 ## Running the app
+First we need to populate our database with the required schema for the application to work properly.
+
+```
+$ npm run db:migrate
+```
+Once migration process has finished proceed with initializing the application
 
 ```bash
 # development
